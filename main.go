@@ -38,9 +38,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request) {
     // incase our content is not passed in or invalid through an error
     if content == "" {
         writer.WriteHeader(400)
-        json.NewEncoder(writer).Encode(
-            "Could not determine the desired QRcode content!"
-            )
+        json.NewEncoder(writer).Encode("Could not determine the desired QRcode content!")
         return
     }
 
@@ -48,9 +46,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request) {
     qrCodeSize, err := strconv.Atoi(size)
     if err != nil || size == "" {
         writer.WriteHeader(400)
-        json.NewEncoder(writer).Encode(
-            "Could not determine the QRcode size!"
-            )
+        json.NewEncoder(writer).Encode("Could not determine the QRcode size!")
         return
     }
 
@@ -59,13 +55,12 @@ func handleRequest(writer http.ResponseWriter, request *http.Request) {
     // incase we run into an error as we make the qrcode then thro an error back to the user as json
     if err != nil {
         writer.WriteHeader(400)
-        json.NewEncoder(writer).Encode(
-            fmt.Sprintf("Could not generate QR code. %v", err)
-            )
+        json.NewEncoder(writer).Encode(fmt.Sprintf("Could not generate QR code. %v", err))
         return
     }
 
-    writer.WriteHeader().Set("Content-Type", "image/png")
+    writer.Header().Set("Content-Type", "image/png")
+    writer.Write(codeData)
 }
 
 // main function to run the web server
