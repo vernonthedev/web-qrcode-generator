@@ -3,6 +3,10 @@ package main
 import (
     "net/http"
     "fmt"
+    "encoding/json"
+    "strconv"
+
+    qrcode "github.com/skip2/go-qrcode"
 )
 
 //define the qrcode properties using a struct
@@ -24,7 +28,44 @@ func (code *simpleQrcode) generate() ([]byte,error){
 
 //handle what ever request is sent under the generate route
 func handleRequest(writer http.ResponseWriter, request *http.Request) {
-    
+    // limit the uploaded file size to 10mbs
+    request.ParseMultipartForm(10 << 20)
+    var size, content string = request.FormValue("size"), request.FormValue("content")
+    var codeData []byte
+
+    writer.Header().Set("Content-Type", "application/json")
+
+    // incase our content is not passed in or invalid through an error
+    if content == "" {
+        writer.WriteHeader(400)
+        json.NewEncoder(writer).Encode(
+            "Could not determine the desired QRcode content!"
+            )
+        return
+    }
+
+    // incase our size is not passed in or invalid through an error
+    qrCodeSize, err := strconv.Atoi(size)
+    if err != nil || size == "" {
+        writer.WriteHeader(400)
+        json.NewEncoder(writer).Encode(
+            "Could not determine the QRcode size!"
+            )
+        return
+    }
+
+    qrCode := simpleQrcode{Content: content, Size: qrCodeSize}
+    codeData, err = qrCode.generate()
+    // incase we run into an error as we make the qrcode then thro an error back to the user as json
+    if err != nil {
+        writer.WriteHeader(400)
+        json.NewEncoder(writer).Encode(
+            fmt.Sprintf("Could not generate QR code. %v", err)
+            )
+        return
+    }
+
+    writer.WriteHeader().Set("Content-Type", "image/png")
 }
 
 // main function to run the web server
